@@ -1,0 +1,32 @@
+name: gate
+
+# The repo checks itself on every push. If a chalkboard stops being true,
+# this goes red — which is the correct outcome when the book is wrong.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  run-the-gate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # stdlib only, so we test the whole supported range
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run the gate (no dependencies to install)
+        run: python tests/run.py
+      - name: Run every demo
+        run: |
+          for f in demos/*.py; do
+            echo "--- $f"
+            python "$f" > /dev/null
+          done
